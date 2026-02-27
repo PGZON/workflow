@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: CI-CD Pipeline
 
 on:
   push:
@@ -6,6 +6,8 @@ on:
       - main
 
 jobs:
+
+  # -------- Build & Push --------
   build:
     runs-on: ubuntu-latest
 
@@ -26,3 +28,18 @@ jobs:
       - name: Push Image
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/test-flow:latest
+
+
+  # -------- Deploy to Minikube --------
+  deploy:
+    needs: build
+    runs-on: self-hosted   # 🔥 THIS USES YOUR LOCAL RUNNER
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f k8s/
+          kubectl rollout restart deployment test-flow
