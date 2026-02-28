@@ -55,7 +55,7 @@ jobs:
 
       - name: Apply Kubernetes Manifests
         run: |
-          kubectl apply -f K8s/
+          kubectl apply -f test-flow.yaml
 
       - name: Update Deployment Image
         run: |
