@@ -7,7 +7,6 @@ on:
 
 jobs:
 
-  # -------- Build & Push --------
   build:
     runs-on: ubuntu-latest
 
@@ -21,25 +20,39 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build Image
+      - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/test-flow:latest .
+          docker build -t prathamesh0505/test-flow:${{ github.sha }} .
 
-      - name: Push Image
+      - name: Push Docker Image
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/test-flow:latest
+          docker push prathamesh0505/test-flow:${{ github.sha }}
 
-
-  # -------- Deploy to Minikube --------
   deploy:
     needs: build
-    runs-on: self-hosted   # 🔥 THIS USES YOUR LOCAL RUNNER
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
 
-      - name: Deploy to Kubernetes
+      - name: Update kubeconfig
         run: |
-          kubectl apply -f k8s/
-          kubectl rollout restart deployment test-flow
+          aws eks update-kubeconfig --region ap-south-1 --name test-cluster
+
+      - name: Apply Kubernetes Manifests
+        run: |
+          kubectl apply -f k8s/test-flow.yaml
+
+      - name: Update Deployment Image
+        run: |
+          kubectl set image deployment/test-flow \
+          test-flow=prathamesh0505/test-flow:${{ github.sha }}
+
+      - name: Verify Rollout
+        run: |
+          kubectl rollout status deployment/test-flow
