@@ -7,9 +7,9 @@ on:
 
 jobs:
 
-  # ----------------------
-  # 1️⃣ Build & Push Image
-  # ----------------------
+  # =====================================
+  # 1️⃣ BUILD & PUSH DOCKER IMAGE
+  # =====================================
   build:
     runs-on: ubuntu-latest
 
@@ -31,15 +31,16 @@ jobs:
         run: |
           docker push prathamesh0505/test-flow:${{ github.sha }}
 
-  # ----------------------
-  # 2️⃣ Deploy to EKS
-  # ----------------------
+  # =====================================
+  # 2️⃣ DEPLOY TO EKS
+  # =====================================
   deploy:
     needs: build
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code   # 🔥 REQUIRED IN EVERY JOB
+      # 🔥 VERY IMPORTANT - MUST CHECKOUT AGAIN
+      - name: Checkout Code
         uses: actions/checkout@v3
 
       - name: Configure AWS Credentials
